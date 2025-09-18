@@ -549,12 +549,12 @@ Structural templates can be specified only for protein chains:
 The fields specify the following:
 
 *   `mmcif: str`: A string containing the single chain protein structural
-    template in the mmCIF format.
+    template in the mmCIF format.包含mmCIF格式单链蛋白质结构模板的字符串
 *   `mmcifPath: str`: An optional path to a file that contains the mmCIF with
     the structural template instead of providing it inline using the `mmcifPath`
     field. The path can be either absolute, or relative to the input JSON path.
     The file must be in the mmCIF format, and could be either plain text, or
-    compressed using gzip, xz, or zstd.
+    compressed using gzip, xz, or zstd.可选参数，指向包含结构模板的mmCIF文件的路径（作为直接通过mmcif字段内联提供内容的替代方案）。路径可以是绝对路径，或相对于输入JSON文件的路径。文件必须为mmCIF格式，支持纯文本或使用gzip/xz/zstd压缩格式
 *   `queryIndices: list[int]`: O-based indices in the query sequence, defining
     the mapping from query residues to template residues.
 *   `templateIndices: list[int]`: O-based indices in the template sequence,
