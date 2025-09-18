@@ -16,28 +16,40 @@ You can provide inputs to `run_alphafold.py` in one of two ways:您可以通过�
 AlphaFold 3 uses a custom JSON input format differing from the
 [AlphaFold Server JSON input format](https://github.com/google-deepmind/alphafold/tree/main/server).
 See [below](#alphafold-server-json-compatibility) for more information.
+AlphaFold 3 使用一种不同于 AlphaFold Server JSON 输入格式的自定义 JSON 格式。更多信息请见下文。
 
 The custom AlphaFold 3 format allows:
+自定义的 AlphaFold 3 格式允许：
 
 *   Specifying protein, RNA, and DNA chains, including modified residues.
+*   指定蛋白质、RNA 和 DNA 链，包括修饰过的残基。
 *   Specifying custom multiple sequence alignment (MSA) for protein and RNA
     chains.
+    为蛋白质和 RNA 链指定自定义的多序列比对（MSA）。
 *   Specifying custom structural templates for protein chains.
+*   为蛋白质链指定自定义的结构模板。
 *   Specifying ligands using
     [Chemical Component Dictionary (CCD)](https://www.wwpdb.org/data/ccd) codes.
+    使用化学成分词典（CCD）代码指定配体。
 *   Specifying ligands using SMILES.
+*   使用 SMILES 字符串指定配体。
 *   Specifying ligands by defining them using the CCD mmCIF format and supplying
     them via the [user-provided CCD](#user-provided-ccd).
+    通过使用 CCD mmCIF 格式定义配体，并通过用户提供的 CCD 来提供它们。
 *   Specifying covalent bonds between entities.
+*   指定实体之间的共价键。
 *   Specifying multiple random seeds.
+*   指定多个随机种子。    
 
-## AlphaFold Server JSON Compatibility
+
+## AlphaFold Server JSON Compatibility AlphaFold Server JSON 兼容性
 
 The [AlphaFold Server](https://alphafoldserver.com/) uses a separate
 [JSON format](https://github.com/google-deepmind/alphafold/tree/main/server)
 from the one used here in the AlphaFold 3 codebase. In particular, the JSON
 format used in the AlphaFold 3 codebase offers more flexibility and control in
 defining custom ligands, branched glycans, and covalent bonds between entities.
+AlphaFold Server 使用的 JSON 格式与 AlphaFold 3 代码库中使用的格式是分开的。特别地，AlphaFold 3 代码库中使用的 JSON 格式在定义自定义配体、支链聚糖和实体间的共价键方面提供了更大的灵活性和控制力。
 
 We provide a converter in `run_alphafold.py` which automatically detects the
 input JSON format, denoted `dialect` in the converter code. The converter
@@ -45,54 +57,63 @@ denotes the AlphaFoldServer JSON as `alphafoldserver`, and the JSON format
 defined here in the AlphaFold 3 codebase as `alphafold3`. If the detected input
 JSON format is `alphafoldserver`, then the converter will translate that into
 the JSON format `alphafold3`.
+我们在 run_alphafold.py 中提供了一个转换器，它可以自动检测输入的 JSON 格式（在转换器代码中称为 dialect，即“方言”）。转换器将 AlphaFold Server 的 JSON 标记为 alphafoldserver，而将 AlphaFold 3 代码库中定义的 JSON 格式标记为 alphafold3。如果检测到输入的 JSON 格式是 alphafoldserver，转换器会将其翻译成 alphafold3 格式。
 
-### Multiple Inputs
+### Multiple Inputs 多重输入
 
 The top-level of the `alphafoldserver` JSON format is a list, allowing
 specification of multiple inputs in a single JSON. In contrast, the `alphafold3`
 JSON format requires exactly one input per JSON file. Specifying multiple inputs
 in a single `alphafoldserver` JSON is fully supported.
+alphafoldserver JSON 格式的顶层是一个列表，允许在单个 JSON 文件中指定多个输入。相比之下，alphafold3 JSON 格式要求每个 JSON 文件只有一个输入。完全支持在单个 alphafoldserver JSON 中指定多个输入。
 
 Note that the converter distinguishes between `alphafoldserver` and `alphafold3`
 JSON formats by checking if the top-level of the JSON is a list or not. In
 particular, if you pass in a `alphafoldserver`-style JSON without a top-level
 list, then this is considered incorrect and `run_alphafold.py` will raise an
 error.
+请注意，转换器通过检查 JSON 的顶层是否为列表来区分 alphafoldserver 和 alphafold3 格式。特别地，如果您传入一个没有顶层列表的 alphafoldserver 风格的 JSON，这将被视为不正确，run_alphafold.py 将会报错。
 
-### Glycans
+### Glycans 聚糖 (Glycans)
 
 If the JSON in `alphafoldserver` format specifies glycans, the converter will
 raise an error. This is because translating glycans specified in the
 `alphafoldserver` format to the `alphafold3` format is not currently supported.
+如果 alphafoldserver 格式的 JSON 指定了聚糖，转换器将会报错。这是因为目前不支持将 alphafoldserver 格式中指定的聚糖翻译成 alphafold3 格式。
 
-### Random Seeds
+### Random Seeds 随机种子 (Random Seeds)
 
 The `alphafoldserver` JSON format allows users to specify `"modelSeeds": []`, in
 which case a seed is chosen randomly for the user. On the other hand, the
 `alphafold3` format requires users to specify a seed.
+alphafoldserver JSON 格式允许用户指定 "modelSeeds": []，在这种情况下，系统会为用户随机选择一个种子。而 alphafold3 格式则要求用户必须明确指定一个种子。
 
 The converter will choose a seed randomly if `"modelSeeds": []` is set when
 translating from `alphafoldserver` JSON format to `alphafold3` JSON format. If
 seeds are specified in the `alphafoldserver` JSON format, then those will be
 preserved in the translation to the `alphafold3` JSON format.
+当从 alphafoldserver 格式转换为 alphafold3 格式时，如果设置了 "modelSeeds": []，转换器会随机选择一个种子。如果在 alphafoldserver 格式中指定了种子，这些种子将在转换到 alphafold3 格式时被保留。
 
-### Ions
+### Ions 离子
 
 While AlphaFold Server treats ions and ligands as different entity types in the
 JSON format, AlphaFold 3 treats ions as ligands. Therefore, to specify e.g. a
 magnesium ion, one would specify it as an entity of type `ligand` with
 `ccdCodes: ["MG"]`.
+虽然AlphaFold Server将离子和配体视为JSON格式的不同实体类型，但AlphaFold 3将离子视为配体。因此，要指定例如镁离子，可以将其指定为具有“ccdCodes：[“MG”]”的“配体”类型的实体。
 
-### Sequence IDs
+### Sequence IDs 序列IDs
 
 The `alphafold3` JSON format requires the user to specify a unique identifier
 (`id`) for each entity. On the other hand, the `alphafoldserver` does not allow
 specification of an `id` for each entity. Thus, the converter automatically
 assigns one.
+`alphafold3` JSON格式要求用户为每个实体指定一个唯一的标识符（`id`）。另一方面，“alphafoldserver”不允许为每个实体指定“id”。因此，转换器会自动分配一个。
 
 The converter iterates through the list provided in the `sequences` field of the
 `alphafoldserver` JSON format, assigning an `id` to each entity using the
 following order ("reverse spreadsheet style"):
+转换器会遍历alphafoldserver JSON格式中sequences字段提供的列表，并按照以下顺序（"反向电子表格风格"）为每个实体分配id：
 
 ```
 A, B, ..., Z, AA, BA, CA, ..., ZA, AB, BB, CB, ..., ZB, ...
@@ -100,10 +121,11 @@ A, B, ..., Z, AA, BA, CA, ..., ZA, AB, BB, CB, ..., ZB, ...
 
 For any entity with `count > 1`, an `id` is assigned arbitrarily to each "copy"
 of the entity.
+对于任何“计数>1”的实体，都会为该实体的每个“副本”任意分配一个“id”。
 
-## Top-level Structure
+## Top-level Structure 顶层结构
 
-The top-level structure of the input JSON is:
+The top-level structure of the input JSON is: 输入 JSON 的顶层结构是：
 
 ```json
 {
