@@ -141,37 +141,45 @@ compared to the set up on the NVIDIA A100 (80 GB), due to less available memory.
 There are known numerical issues with CUDA Capability 7.x devices. To work
 around the issue, set the ENV XLA_FLAGS to include
 `--xla_disable_hlo_passes=custom-kernel-fusion-rewriter`.
+已知CUDA计算能力7.x设备存在数值问题。要解决此问题，请设置环境变量XLA_FLAGS，包含--xla_disable_hlo_passes=custom-kernel-fusion-rewriter
 
 With the above flag set, AlphaFold 3 can run on inputs of size up to 1,280
 tokens on a single NVIDIA V100 using [unified memory](#unified-memory).
+设置上述标志后，AlphaFold 3可以在单个NVIDIA V100上使用统一内存运行最多1280个令牌的输入。
 
 #### NVIDIA P100
 
 AlphaFold 3 can run on inputs of size up to 1,024 tokens on a single NVIDIA P100
 with no configuration changes needed.
+AlphaFold 3可以在单个NVIDIA P100上运行高达1024个令牌的输入，无需更改配置
 
 #### Other devices
 
 Large-scale numerical tests have not been performed on any other devices but
 they are believed to be numerically accurate.
+尚未在其他设备上进行大规模数值测试，但相信其在数值上是准确的
 
 There are known numerical issues with CUDA Capability 7.x devices. To work
 around the issue, set the environment variable `XLA_FLAGS` to include
 `--xla_disable_hlo_passes=custom-kernel-fusion-rewriter`.
+已知CUDA计算能力7.x设备存在数值问题。要解决此问题，请设置环境变量XLA_FLAGS，包含--xla_disable_hlo_passes=custom-kernel-fusion-rewriter
 
-## Compilation Buckets
+## Compilation Buckets 编译分桶
 
 To avoid excessive re-compilation of the model, AlphaFold 3 implements
 compilation buckets: ranges of input sizes using a single compilation of the
 model.
+为避免模型过度重新编译，AlphaFold 3实现了编译分桶：使用单个模型编译处理一定范围内的输入尺寸。
 
 When featurising an input, AlphaFold 3 determines the smallest bucket the input
 fits into, then adds any necessary padding. This may avoid re-compiling the
 model when running inference on the input if it belongs to the same bucket as a
 previously processed input.
+在对输入进行特征化时，AlphaFold 3会确定输入适合的最小分桶，然后添加必要的填充。如果输入与先前处理的输入属于同一分桶，这可以避免在运行推理时重新编译模型。
 
 The configuration of bucket sizes involves a trade-off: more buckets leads to
 more re-compilations of the model, but less padding.
+分桶大小的配置需要权衡：更多分桶会导致更多模型重新编译，但填充更少。
 
 By default, the largest bucket size is 5,120 tokens. Processing inputs larger
 than this maximum bucket size triggers the creation of a new bucket for exactly
@@ -182,6 +190,7 @@ you are running inference on inputs with token sizes: `5132, 5280, 5342`. Using
 the default bucket sizes configured in `run_alphafold.py` will trigger three
 separate model compilations, one for each unique token size. If instead you pass
 in the following flag to `run_alphafold.py`
+默认情况下，最大分桶大小为5,120个令牌。处理大于此最大分桶大小的输入会触发为该特定输入尺寸创建新分桶，并重新编译模型。这种情况下，您可能希望通过run_alphafold.py中的--buckets标志重新定义编译分桶大小，以添加更大的分桶尺寸。例如，假设您正在处理令牌尺寸为5132, 5280, 5342的输入。使用run_alphafold.py中配置的默认分桶大小将触发三次单独的模型编译，每次对应一个独特的令牌尺寸。如果您改为向run_alphafold.py传递以下标志：
 
 ```
 --buckets 256,512,768,1024,1280,1536,2048,2560,3072,3584,4096,4608,5120,5376
@@ -193,42 +202,45 @@ example with input sizes `5132, 5280, 5342`, passing in `--buckets 5376` is
 sufficient to achieve the desired compilation behaviour. The provided example
 with multiple buckets illustrates a more general solution suitable for diverse
 input sizes.
+在处理上述三个输入尺寸时，模型将仅针对分桶大小5376编译一次。注意：对于输入尺寸为5132, 5280, 5342的此特定示例，传入--buckets 5376足以实现所需的编译行为。提供的包含多个分桶的示例展示了一种适用于不同输入尺寸的更通用解决方案。
 
-## Additional Flags
+## Additional Flags 附加标志
 
-### Compilation Time Workaround with XLA Flags
+### Compilation Time Workaround with XLA Flags 使用XLA标志解决编译时间问题
 
 To work around a known XLA issue causing the compilation time to greatly
 increase, the following environment variable must be set (it is set by default
 in the provided `Dockerfile`).
+为解决已知的XLA问题导致编译时间大幅增加，必须设置以下环境变量（提供的Dockerfile中默认设置）。
 
 ```sh
 ENV XLA_FLAGS="--xla_gpu_enable_triton_gemm=false"
 ```
 
-### CUDA Capability 7.x GPUs
+### CUDA Capability 7.x GPUs CUDA计算能力7.x GPU
 
 For all CUDA Capability 7.x GPUs (e.g. V100) the environment variable
 `XLA_FLAGS` must be changed to include
 `--xla_disable_hlo_passes=custom-kernel-fusion-rewriter`. Disabling the Tritron
 GEMM kernels is not necessary as they are not supported for such GPUs.
-
+对于所有CUDA计算能力7.x GPU（如V100），环境变量XLA_FLAGS必须更改为包含--xla_disable_hlo_passes=custom-kernel-fusion-rewriter。不需要禁用Tritron GEMM内核，因为它们在此类GPU上不受支持。
 ```sh
 ENV XLA_FLAGS="--xla_disable_hlo_passes=custom-kernel-fusion-rewriter"
 ```
 
-### GPU Memory
+### GPU Memory GPU内存
 
 The following environment variables (set by default in the `Dockerfile`) enable
 folding a single input of size up to 5,120 tokens on a single A100 (80 GB) or a
 single H100 (80 GB):
+以下环境变量（在Dockerfile中默认设置）支持在单个A100（80 GB）或单个H100（80 GB）上处理最大5,120个令牌的单个输入：
 
 ```sh
 ENV XLA_PYTHON_CLIENT_PREALLOCATE=true
 ENV XLA_CLIENT_MEM_FRACTION=0.95
 ```
 
-#### Unified Memory
+#### Unified Memory 统一内存
 
 If you would like to run AlphaFold 3 on inputs larger than 5,120 tokens, or on a
 GPU with less memory (an A100 with 40 GB of memory, for instance), we recommend
@@ -237,9 +249,11 @@ memory to host memory if there isn't enough space. This prevents an OOM, at the
 cost of making the program slower by accessing host memory instead of device
 memory. To learn more, check out the
 [NVIDIA blog post](https://developer.nvidia.com/blog/unified-memory-cuda-beginners/).
+如果您想在大于5,120个令牌的输入上运行AlphaFold 3，或在内存较小的GPU上运行（例如40 GB内存的A100），我们建议启用统一内存。启用统一内存允许程序在GPU内存不足时将内存溢出到主机内存。这可以防止OOM（内存不足），但代价是通过访问主机内存而非设备内存使程序变慢。了解更多，请查看NVIDIA博客文章。
 
 You can enable unified memory by setting the following environment variables in
 your `Dockerfile`:
+您可以通过在Dockerfile中设置以下环境变量来启用统一内存：
 
 ```sh
 ENV XLA_PYTHON_CLIENT_PREALLOCATE=false
@@ -247,12 +261,13 @@ ENV TF_FORCE_UNIFIED_MEMORY=true
 ENV XLA_CLIENT_MEM_FRACTION=3.2
 ```
 
-### JAX Persistent Compilation Cache
+### JAX Persistent Compilation Cache JAX持久编译缓存
 
 You may also want to make use of the JAX persistent compilation cache, to avoid
 unnecessary recompilation of the model between runs. You can enable the
 compilation cache with the `--jax_compilation_cache_dir <YOUR_DIRECTORY>` flag
 in `run_alphafold.py`.
+您可能还希望利用JAX持久编译缓存，以避免在运行之间不必要的模型重新编译。您可以使用run_alphafold.py中的--jax_compilation_cache_dir <您的目录>标志启用编译缓存。
 
 More detailed instructions are available in the
 [JAX documentation](https://jax.readthedocs.io/en/latest/persistent_compilation_cache.html#persistent-compilation-cache),
@@ -262,3 +277,4 @@ In particular, note that if you would like to make use of a non-local
 filesystem, such as Google Cloud Storage, you will need to install
 [`etils`](https://github.com/google/etils) (this is not included by default in
 the AlphaFold 3 Docker container).
+更详细的说明可在JAX文档中找到，特别是关于在Google Cloud上使用的说明。特别注意，如果您想使用非本地文件系统（如Google Cloud Storage），需要安装etils（AlphaFold 3 Docker容器默认不包含此库）。
