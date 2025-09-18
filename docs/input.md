@@ -531,9 +531,10 @@ DD-P----
 DD-PMIN-
 ```
 
-## Structural Templates
+## Structural Templates 结构模板
 
 Structural templates can be specified only for protein chains:
+只能为蛋白质链指定结构模板：
 
 ```json
 "templates": [
@@ -547,26 +548,32 @@ Structural templates can be specified only for protein chains:
 ```
 
 The fields specify the following:
+这些字段指定了以下内容：
 
 *   `mmcif: str`: A string containing the single chain protein structural
-    template in the mmCIF format.包含mmCIF格式单链蛋白质结构模板的字符串
+    template in the mmCIF format.
+    包含mmCIF格式单链蛋白质结构模板的字符串
 *   `mmcifPath: str`: An optional path to a file that contains the mmCIF with
     the structural template instead of providing it inline using the `mmcifPath`
     field. The path can be either absolute, or relative to the input JSON path.
     The file must be in the mmCIF format, and could be either plain text, or
-    compressed using gzip, xz, or zstd.可选参数，指向包含结构模板的mmCIF文件的路径（作为直接通过mmcif字段内联提供内容的替代方案）。路径可以是绝对路径，或相对于输入JSON文件的路径。文件必须为mmCIF格式，支持纯文本或使用gzip/xz/zstd压缩格式
+    compressed using gzip, xz, or zstd.
+    一个可选的文件路径，包含结构模板的 mmCIF 数据，用于替代在 mmcifPath 字段中直接提供内联数据。该路径可以是绝对路径，也可以是相对于输入 JSON 文件路径的相对路径。文件必须为mmCIF格式，支持纯文本或使用gzip/xz/zstd压缩格式
 *   `queryIndices: list[int]`: O-based indices in the query sequence, defining
     the mapping from query residues to template residues.
+    查询序列中基于0的索引，定义从查询残基到模板残基的映射关系
 *   `templateIndices: list[int]`: O-based indices in the template sequence,
     specifying the mapping from query residues to template residues defined in
     the mmCIF file. Note that unresolved mmCIF residues must be taken into
     account when specifying template indices.
+    模板序列中基于0的索引，指定查询残基与mmCIF文件中模板残基的映射关系。注意：指定模板索引时必须考虑mmCIF中未解析的残基
 
 A template is specified as an mmCIF string containing a single chain with the
 structural template together with a 0-based mapping that maps query residue
 indices to the template residue indices. The mapping is specified using two
 lists of the same length. E.g. to express a mapping `{0: 0, 1: 2, 2: 5, 3: 6}`,
 you would specify the two indices lists as:
+模板被指定为一个 mmCIF 格式的字符串，其中包含一个带有结构模板的单链，以及一个从 0 开始的映射，该映射将查询序列的残基索引映射到模板序列的残基索引。该映射通过两个等长的列表来指定。例如，要表示映射 {0: 0, 1: 2, 2: 5, 3: 6}，您需要像下面这样指定两个索引列表：
 
 ```json
 "queryIndices":    [0, 1, 2, 3],
@@ -580,14 +587,17 @@ template with unresolved residues 1, 2, 3 and resolved residues 4, 5, 6, 7, you
 need to set the template indices to 3, 4, 5, 6 (since 0-based indexing is used).
 An example of a protein with unresolved residues 1–20 can be found here:
 https://www.rcsb.org/structure/8UXY.
+请注意，mmCIF 文件中可能包含缺少原子坐标的残基（即这些残基存在于残基表中，但缺失于 _atom_site 表中）——在指定模板索引时必须考虑到这一点。例如，要将一个模板中未解析的残基 1、2、3 和已解析的残基 4、5、6、7 与查询序列对齐，您需要将模板索引设置为 3, 4, 5, 6（因为使用的是从 0 开始的索引）。一个包含未解析残基 1-20 的蛋白质示例可以在这里找到：https://www.rcsb.org/structure/8UXY 。
 
 You can provide multiple structural templates. Note that if an mmCIF containing
 more than one chain is provided, you will get an error since it is not possible
 to determine which of the chains should be used as the template.
+您可以提供多个结构模板。请注意，如果提供的 mmCIF 文件包含不止一条链，您将会收到一个错误，因为程序无法确定应该使用哪条链作为模板。
 
 You can run template-free (but still run genetic search and build MSA) by
 setting templates to `[]` and either explicitly setting both `unpairedMsa` and
 `pairedMsa` to `null`:
+您也可以在无模板的情况下运行（但仍然执行遗传搜索和构建多序列比对 MSA），方法是将 templates 设置为 []，并明确地将 unpairedMsa 和 pairedMsa 都设置为 null：
 
 ```json
 "protein": {
@@ -600,6 +610,7 @@ setting templates to `[]` and either explicitly setting both `unpairedMsa` and
 ```
 
 Or you can simply fully omit them:
+或者，您可以直接完全省略它们：
 
 ```json
 "protein": {
@@ -614,6 +625,7 @@ templates. This can be achieved by setting `unpairedMsa` and `pairedMsa`, but
 keeping templates unset (or set to `null`). The profile given as an input to
 Hmmsearch when searching for templates will be built from the provided
 `unpairedMsa`:
+您还可以使用预先计算好的 MSA 运行，但让 AlphaFold 3 自己搜索模板。这可以通过设置 unpairedMsa 和 pairedMsa，同时保持 templates 未设置（或设为 null）来实现。在搜索模板时，输入到 Hmmsearch 的配置文件将从您提供的 unpairedMsa 构建而来：
 
 ```json
 "protein": {
@@ -627,6 +639,7 @@ Hmmsearch when searching for templates will be built from the provided
 
 Or you can simply fully omit the `templates` field thus setting it implicitly to
 `null`:
+或者，您可以直接完全省略 templates 字段，从而隐式地将其设置为 null：
 
 ```json
 "protein": {
