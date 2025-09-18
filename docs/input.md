@@ -1,15 +1,17 @@
 # AlphaFold 3 Input
 
-## Specifying Input Files
+## Specifying Input Files 指定输入文件
 
-You can provide inputs to `run_alphafold.py` in one of two ways:
+You can provide inputs to `run_alphafold.py` in one of two ways:您可以通过以下两种方式之一向`run_alphafold.py `提供输入：
 
 -   Single input file: Use the `--json_path` flag followed by the path to a
     single JSON file.
+    单个输入文件：使用`--json_path`标志，后跟单个json文件的路径。
 -   Multiple input files: Use the `--input_dir` flag followed by the path to a
     directory of JSON files.
+    多个输入文件：使用`--input_dir`标志，后跟JSON文件目录的路径。
 
-## Input Format
+## Input Format 输入格式
 
 AlphaFold 3 uses a custom JSON input format differing from the
 [AlphaFold Server JSON input format](https://github.com/google-deepmind/alphafold/tree/main/server).
